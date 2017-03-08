@@ -114,10 +114,6 @@ DENEBOLA
 Dheneb
 Diadem
 DIPHDA
-Double Double (7051)
-Double Double (7052)
-Double Double (7053)
-Double Double (7054)
 Dschubba
 Dsiban
 DUBHE
@@ -146,7 +142,7 @@ Haedi
 HAMAL
 Hassaleh
 Head of Hydrus
-Herschel's "Garnet Star"
+Garnet
 Heze
 Hoedus II
 Homam
@@ -270,10 +266,7 @@ Subra
 Suhail al Muhlif
 Sulafat
 Syrma
-Tabit (1543)
-Tabit (1544)
-Tabit (1552)
-Tabit (1570)
+Tabit
 Talitha
 Tania Australis
 Tania Borealis
@@ -281,9 +274,6 @@ TARAZED
 Taygeta
 Tegmen
 Tejat Posterior
-Terebellum
-Terebellum
-Terebellum
 Terebellum
 Thabit
 Theemim

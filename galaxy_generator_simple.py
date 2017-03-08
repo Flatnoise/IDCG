@@ -7,7 +7,17 @@ output_version = 1  # Version of output format
 import argparse
 import random
 import string
+import json
+import idcg_common
 
+
+
+#Parsing command-line parameters
+# USAGE: galaxy_generator_simple.py [parameters]
+# --width <WIDTH OF GALAXY IN POINTS>
+# --height <WIDTH OF GALAXY IN POINTS>
+# --dict <TEXT FILE> - file with stat names
+# --out <JSON FILE> - output savefile
 parser = argparse.ArgumentParser(description="Simple Galaxy Generator for IDCG",
                                  usage='galaxy_generator_simple.py [options]')
 
@@ -48,8 +58,31 @@ while max_stars > len(star_names):
     star_names.append((''.join(random.choices(string.ascii_uppercase, k=4))) + '-' +
                       (''.join(random.choices(string.digits, k=7))))
 
-for line in star_names:
-    print(line)
+
+# Generating stars
+tmp_indx = 0
+stars = []  # main list of all star systems
+
+# Iterating through coord.grid with step of 10
+for itr_x in range(1, int(glx_width / 10)):
+    for itr_y in range(1, int(glx_height / 10)):
+        # Getting random name from list of names;
+        # Deleting name from the list after that
+        rnd_index = random.randrange(0, len(star_names))
+        rnd_starname = star_names[rnd_index]
+        del star_names[rnd_index]
+
+        # Create index and StarSystem object
+        tmp_indx += 1
+        tmp_star = idcg_common.StarSystem(tmp_indx, rnd_starname, itr_x, itr_y, random.randrange(1,7), 1, 1)
+        stars.append(tmp_star)
+
+
+# Generating wormholes
+#for star in stars:
 
 
 
+# Writing all data to JSON file
+with open(args.out, 'w', encoding='utf-8') as out_file:
+    json.dump(stars, out_file, ensure_ascii=True, indent="", default=idcg_common.jsonDefault)
