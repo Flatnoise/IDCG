@@ -12,6 +12,17 @@ BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
 RED   = (255,   0,   0)
 
+def check_stars_viewport(s):
+    # Check if new coordinates are in stars viewport
+    if (s.rect.x > stars_viewport_x1 and s.rect.x < stars_viewport_x2 and
+                s.rect.y > stars_viewport_y1 and s.rect.y < stars_viewport_y2):
+        # Add star to viewport if not present
+        if not stars_viewport.has(s):
+            stars_viewport.add(s)
+    # Remove star from viewport if new coordinates are in range
+    else:
+        stars_viewport.remove(s)
+
 
 class StarSprite(pygame.sprite.Sprite):
     """
@@ -93,6 +104,12 @@ fl_quit = False
 scroll_speed = 15
 is_scrolled = False     # flag. True if scrolling key was pressed
 
+# Viewport for stars
+stars_viewport_x1 = 25
+stars_viewport_y1 = 25
+stars_viewport_x2 = 800
+stars_viewport_y2 = 800
+
 # Used to manage how fast the screen updates
 clock = pygame.time.Clock()
 
@@ -100,10 +117,10 @@ clock = pygame.time.Clock()
 screen = pygame.display.set_mode([args.x, args.y])
 
 # Creating sprite group
-stars_sprites_list = pygame.sprite.Group()
-stars_text_sprites_list = pygame.sprite.Group()
+stars_sprites = pygame.sprite.Group()
+stars_text_sprites = pygame.sprite.Group()
 all_sprites_list = pygame.sprite.Group()
-
+stars_viewport = pygame.sprite.Group()
 
 # Creating sprite for each star system
 for star in stars:
@@ -137,11 +154,17 @@ for star in stars:
     text_sprite.rect.y = star.y * grid_y + shift_y + 50
 
     # Add this sprite to groups
-    stars_sprites_list.add(star_sprite)
-    stars_text_sprites_list.add(text_sprite)
+    stars_sprites.add(star_sprite)
+    stars_text_sprites.add(text_sprite)
 
     all_sprites_list.add(star_sprite)
     all_sprites_list.add(text_sprite)
+
+    # Viewport for stars
+    if (star_sprite.rect.x > stars_viewport_x1 and star_sprite.rect.x < stars_viewport_x2 and
+                star_sprite.rect.y > stars_viewport_y1 and star_sprite.rect.y < stars_viewport_y2):
+        stars_viewport.add(star_sprite)
+        stars_viewport.add(text_sprite)
 
 
 
@@ -174,17 +197,19 @@ while not fl_quit:
                 is_scrolled = False
                 # Looking for element with particular ID in list of stars
                 for index, star in enumerate(stars):
-                    for s in stars_sprites_list:
+                    for s in stars_sprites:
                         if star.id == s.id:
                             # Recalculating coordinates
                             s.rect.x = stars[index].x * grid_x + shift_x
                             s.rect.y = stars[index].y * grid_y + shift_y
+                            check_stars_viewport(s)
 
-                    for s in stars_text_sprites_list:
+                    for s in stars_text_sprites:
                         if star.id == s.id:
                             # Recalculating coordinates
                             s.rect.x = stars[index].x * grid_x + shift_x
                             s.rect.y = stars[index].y * grid_y + shift_y + 50
+                            check_stars_viewport(s)
 
 
         # Mouse detection
@@ -192,7 +217,7 @@ while not fl_quit:
             pos = pygame.mouse.get_pos()
 
             # Loop througt all sprites
-            for s in stars_sprites_list:
+            for s in stars_sprites:
                 if s.rect.collidepoint(pos):
                     if event.button == 1:
                         print (stars[s.id])
@@ -201,7 +226,10 @@ while not fl_quit:
 
     # Drawing all sprites
     screen.fill(BLACK)
-    all_sprites_list.draw(screen)
+#    all_sprites_list.draw(screen)
+#     stars_sprites.draw(screen)
+#     stars_text_sprites.draw(screen)
+    stars_viewport.draw(screen)
     pygame.display.flip()
 
     # End of loop. Tick the clock
