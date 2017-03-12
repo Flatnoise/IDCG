@@ -1,86 +1,160 @@
 import os
 import json
-import argparse
 import idcg_common
-import pygame
-from pygame.locals import *
-import time
+import sys
 from os import path
-
-# Define some colors
-BLACK = (  0,   0,   0)
-WHITE = (255, 255, 255)
-RED   = (255,   0,   0)
-
-def check_stars_viewport(s):
-    # Check if new coordinates are in stars viewport
-    if (s.rect.x > stars_viewport_x1 and s.rect.x < stars_viewport_x2 and
-                s.rect.y > stars_viewport_y1 and s.rect.y < stars_viewport_y2):
-        # Add star to viewport if not present
-        if not stars_viewport.has(s):
-            stars_viewport.add(s)
-    # Remove star from viewport if new coordinates are in range
-    else:
-        stars_viewport.remove(s)
+from PyQt5 import QtCore, QtGui, QtWidgets
+from UI_GalaxyMap import Ui_MainWindow
 
 
-class StarSprite(pygame.sprite.Sprite):
+
+class SimpleViewerSettings:
     """
-    Picture of star
-    Derives from pygame's sprite class
+    This class contains all global setting for this application
     """
-    def __init__(self, sid, image):
-        # Call the parent class (Sprite) constructor
-        # pygame.sprite.RenderClear.__init__(self)
-        super().__init__()
+    def __init__(self):
+        self.resolutionX = 1024     # Windows default dimentios
+        self.resolutionY = 700
+        self.inputJSON = 'new_galaxy.json'  # Name of input file
+        # Main directories
+        self.dir_main = path.dirname(os.path.realpath(__file__))
+        self.dir_resources = path.join(self.dir_main, 'resources')
+        self.dir_images = path.join(self.dir_resources, 'images')
 
-        self.image = pygame.image.load(image)
-        self.image.set_colorkey((0,0,0))
-        self.rect = self.image.get_rect()
+        self.starSystemFrameSize = 80       # Size of each star system graphic representation
+        self.starSystemSpace = 150          # Distance between star systems
 
-        # Adding ID. ID for sprite has the same number as ID of star system
+
+    # Print all setting, one parameter for one line
+    def __str__(self):
+        seq = ("Default window size:\t" + str(self.resolutionX) + "x" + str(self.resolutionY),
+               "Input\t" + self.inputJSON,
+               "Main dir:\t" + self.dir_main,
+               "Resources dir\t" + self.dir_resources,
+               "Images dir\t" + self.dir_images,
+               "Size of each star frame, px: " + str(self.starSystemFrameSize),
+               "Stars grid size, px: " + str(self.starSystemSpace))
+        return '\n'.join(seq)
+
+class GalaxyMapMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    """
+    Graphic representation of main window with galaxy map
+    """
+    def __init__(self):
+        super(GalaxyMapMainWindow, self).__init__()
+        self.setupUi(self)
+
+        # Calculate window position
+        screen_resolution = app.desktop().screenGeometry()
+        screen_width, screen_height = screen_resolution.width(), screen_resolution.height()
+        # left upper corner coordinates
+        luCornerX = int(screen_width / 2 - settings.resolutionX / 2)
+        luCornerY = int(screen_height / 2 - settings.resolutionY / 2)
+        self.setGeometry(luCornerX, luCornerY, settings.resolutionX, settings.resolutionY)
+
+        # self.scrollerFrame.setStyleSheet("background-color: rgb(0, 255, 0)")
+        self.galaxyMapFrame.setStyleSheet("background-color: rgb(0, 0, 0)")
+        self.infoPanelFrame.setStyleSheet("background-color: rgb(255, 255, 200)")
+
+        # Correction parameter for topleft corner of star's positions
+        self.galaxyMapFrame.shiftX = -50
+        self.galaxyMapFrame.shiftY = -50
+
+
+
+        self.stars = []     # list of star's frames. Only graphic representation, do not miss with main stars list!
+        max_starX = -1      # Rightmost star's position in grid
+        max_starY = -1      # Downmost star's position on grid
+        # Looping through main stars list, creating small frames, one for each star system
+        for star in stars:
+            sid = starsIndex[star.id]       # Get index from list
+            square = StarSystemFrame(self.galaxyMapFrame, star.id)
+            if star.x > max_starX: max_starX = star.x
+            if star.y > max_starY: max_starY = star.y
+
+            square.move(star.x * settings.starSystemSpace + self.galaxyMapFrame.shiftX,
+                        star.y * settings.starSystemSpace + self.galaxyMapFrame.shiftY)
+            self.stars.append(square)
+
+        # Set size of galaxy map frame
+        self.galaxyMapFrame.setFixedSize(QtCore.QSize(max_starX * settings.starSystemSpace + 90,
+                                                     max_starY * settings.starSystemSpace + 90))
+
+    def resizeEvent(self, resizeEvent):
+        """
+        Event: resize main window
+        :param resizeEvent:
+        :return:
+        """
+        # Adjust dimensions of scroll area with galaxy map frame
+        self.scrollArea1.setFixedSize(QtCore.QSize(self.scrollerFrame.width(),
+                                                     self.scrollerFrame.height()))
+
+
+
+class StarSystemFrame(QtWidgets.QFrame):
+    """
+    Main frame for star system
+    Icon of star, text label with name, other icons will be drawn here
+    """
+    def __init__(self, parent, sid):
+        super().__init__(parent)
+
+        # Calculate position of system in list
+        lpos = starsIndex[sid]
+
+        # Resize frame
+        self.resize(settings.starSystemFrameSize, settings.starSystemFrameSize)
+
+        # Calculating center of frame
+        centerX = int(self.height()/2)
+        centerY = int(self.width()/2)
+
+        # Text label with name of the star
+        label = QtWidgets.QLabel(stars[lpos].name, self)
+        label.move (1,65)
+        label.setText(stars[lpos].name)
+        label.setStyleSheet("color: rgb(255, 255, 255)")
+
+        # Icon with star
+        pix = QtGui.QPixmap(self.selectStarImage(stars[lpos].star_type))
+        img = QtWidgets.QLabel('',self)
+        img.setPixmap(pix)
+        img.move(centerX - int(pix.width()/2), centerY - int(pix.height()/2))
+
+        # Writing IDs
         self.id = sid
 
-class StarTextSprite(pygame.sprite.Sprite):
-    """
-    Star name, written below star's sprite
-    Derives from pygame's sprite class
-    """
-    def __init__(self, sid, text, size, textcolor, backcolor):
-        # Call the parent class (Sprite) constructor
-        # pygame.sprite.RenderClear.__init__(self)
-        super().__init__()
+    def selectStarImage(self, type):
+        """
+        This function return a path to a star's icon depending on type of star
+        """
+        if type == 1: filename = "icon_star_o.png"
+        elif type == 2: filename = "icon_star_b.png"
+        elif type == 3: filename = "icon_star_a.png"
+        elif type == 4: filename = "icon_star_f.png"
+        elif type == 5: filename = "icon_star_g.png"
+        elif type == 6: filename = "icon_star_k.png"
+        elif type == 7: filename = "icon_star_m.png"
+        else: filename = "icon_star_m.png"
+        return path.join(settings.dir_images, filename)
 
-        self.font = pygame.font.SysFont("Arial", size)
-        self.image = self.font.render(text, True, textcolor, backcolor)
-        self.rect = self.image.get_rect()
+    def mousePressEvent(self, event):
+        """
+        This event is handling clicks on star systems
+        """
+        print(self.id, stars[starsIndex[self.id]].name)
 
-        # Adding ID. ID for sprite has the same number as ID of star system
-        self.id = sid
 
-#Parsing command-line parameters
-# USAGE: simple_viewer.py -i <SAVEFILE> [optional parameters]
-#
-#
-#
-#
-parser = argparse.ArgumentParser(description="Simple Galaxy Viewer for IDCG",
-                                 usage='simple_viewer.py -i SAVEFILE [options]')
-parser.add_argument('-x', help="Screen width, default 1024", type=int, default=1024)
-parser.add_argument('-y', help="Screen height, default 768", type=int, default=870)
-parser.add_argument('-i', help="Input file", default='new_galaxy.json')
-args = parser.parse_args()
+# Load default settings
+settings = SimpleViewerSettings()
 
-# Determining directories
-dir_main = path.dirname(os.path.realpath(__file__))
-dir_resources = path.join(dir_main, 'resources')
-dir_images = path.join(dir_resources, 'images')
-json_input_filename = path.join(dir_main, args.i)
-
+# Input .JSON filename with path
+json_input_filename = path.join(settings.dir_main, settings.inputJSON)
 
 # Creating list of star systems and load JSON with data
 stars = []
-with open(args.i,'r') as json_input:
+with open(json_input_filename, 'r') as json_input:
     json_data = json.load(json_input)
     json_input.close()
 
@@ -88,152 +162,13 @@ with open(args.i,'r') as json_input:
 for item in json_data:
     stars.append(idcg_common.import_star(item))
 
+# Create dictionary for fast search of star's indexed by IDs
+starsIndex = idcg_common.index_StarSystems(stars)
 
+app = QtWidgets.QApplication(sys.argv)
+galaxyMap = GalaxyMapMainWindow()
+galaxyMap.show()
 
+galaxyMap.resize(1024,701)  # Crutch. To redraw windows right after start
 
-
-# Initialize Pygame
-pygame.init()
-
-# Scaling variables
-grid_x = 120
-grid_y = 120
-shift_x = -30
-shift_y = -30
-fl_quit = False
-scroll_speed = 15
-is_scrolled = False     # flag. True if scrolling key was pressed
-
-# Viewport for stars
-stars_viewport_x1 = 25
-stars_viewport_y1 = 25
-stars_viewport_x2 = 800
-stars_viewport_y2 = 800
-
-# Used to manage how fast the screen updates
-clock = pygame.time.Clock()
-
-# Screen initialisation
-screen = pygame.display.set_mode([args.x, args.y])
-
-# Creating sprite group
-stars_sprites = pygame.sprite.Group()
-stars_text_sprites = pygame.sprite.Group()
-all_sprites_list = pygame.sprite.Group()
-stars_viewport = pygame.sprite.Group()
-
-# Creating sprite for each star system
-for star in stars:
-
-    # Put correct image depending on star type
-    if star.star_type == 1:
-        star_image = path.join(dir_images, 'icon_star_o.png')
-    elif star.star_type == 2:
-        star_image = path.join(dir_images, 'icon_star_a.png')
-    elif star.star_type == 3:
-        star_image = path.join(dir_images, 'icon_star_b.png')
-    elif star.star_type == 4:
-        star_image = path.join(dir_images, 'icon_star_f.png')
-    elif star.star_type == 5:
-        star_image = path.join(dir_images, 'icon_star_g.png')
-    elif star.star_type == 6:
-        star_image = path.join(dir_images, 'icon_star_k.png')
-    elif star.star_type == 7:
-        star_image = path.join(dir_images, 'icon_star_m.png')
-    else:
-        star_image = path.join(dir_images, 'icon_star_m.png')
-
-    # Creating star sprite and adding coordinates
-    star_sprite = StarSprite(star.id, star_image)
-    star_sprite.rect.x = star.x * grid_x + shift_x
-    star_sprite.rect.y = star.y * grid_y + shift_y
-
-    # Creating star name sprite and adding coordinates
-    text_sprite = StarTextSprite(star.id, star.name, 12, WHITE, BLACK)
-    text_sprite.rect.x = star.x * grid_x + shift_x
-    text_sprite.rect.y = star.y * grid_y + shift_y + 50
-
-    # Add this sprite to groups
-    stars_sprites.add(star_sprite)
-    stars_text_sprites.add(text_sprite)
-
-    all_sprites_list.add(star_sprite)
-    all_sprites_list.add(text_sprite)
-
-    # Viewport for stars
-    if (star_sprite.rect.x > stars_viewport_x1 and star_sprite.rect.x < stars_viewport_x2 and
-                star_sprite.rect.y > stars_viewport_y1 and star_sprite.rect.y < stars_viewport_y2):
-        stars_viewport.add(star_sprite)
-        stars_viewport.add(text_sprite)
-
-
-
-while not fl_quit:
-    # User input
-    for event in pygame.event.get():
-        # Keybord detection
-        if event.type == pygame.KEYDOWN:
-            # Quit this for cycle and loop above if escape key pressed
-            if event.key == K_ESCAPE:
-                fl_quit = True
-                break
-
-            # Scrolling keys
-            elif event.key == K_UP:
-                shift_y += scroll_speed
-                is_scrolled = True
-            elif event.key == K_DOWN:
-                shift_y -= scroll_speed
-                is_scrolled = True
-            elif event.key == K_LEFT:
-                shift_x += scroll_speed
-                is_scrolled = True
-            elif event.key == K_RIGHT:
-                shift_x -= scroll_speed
-                is_scrolled = True
-
-            # Recalculate all coordinates if screen is scrolled
-            if is_scrolled:
-                is_scrolled = False
-                # Looking for element with particular ID in list of stars
-                for index, star in enumerate(stars):
-                    for s in stars_sprites:
-                        if star.id == s.id:
-                            # Recalculating coordinates
-                            s.rect.x = stars[index].x * grid_x + shift_x
-                            s.rect.y = stars[index].y * grid_y + shift_y
-                            check_stars_viewport(s)
-
-                    for s in stars_text_sprites:
-                        if star.id == s.id:
-                            # Recalculating coordinates
-                            s.rect.x = stars[index].x * grid_x + shift_x
-                            s.rect.y = stars[index].y * grid_y + shift_y + 50
-                            check_stars_viewport(s)
-
-
-        # Mouse detection
-        elif event.type == pygame.MOUSEBUTTONUP:
-            pos = pygame.mouse.get_pos()
-
-            # Loop througt all sprites
-            for s in stars_sprites:
-                if s.rect.collidepoint(pos):
-                    if event.button == 1:
-                        print (stars[s.id])
-
-
-
-    # Drawing all sprites
-    screen.fill(BLACK)
-#    all_sprites_list.draw(screen)
-#     stars_sprites.draw(screen)
-#     stars_text_sprites.draw(screen)
-    stars_viewport.draw(screen)
-    pygame.display.flip()
-
-    # End of loop. Tick the clock
-    clock.tick(60)
-
-
-pygame.quit()
+sys.exit(app.exec_())

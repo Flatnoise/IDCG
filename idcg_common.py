@@ -19,8 +19,22 @@ def import_star(json_string):
     return StarSystem(json_string['id'], json_string['name'], json_string['x'], json_string['y'],
                                   json_string['star_type'], json_string['nation_prime'], json_string['nation_sec'])
 
+def index_StarSystems(starSystems: list):
+    """
+    Returns a dictionary: StarSystem ID: Star System number in list
+    :param object:
+    :return:
+    """
+    indx = {}
+    for number, star in enumerate(starSystems):
+        indx[star.id] = number
+    return indx
+
+
 class StarSystem:
-    """Main star system definition"""
+    """
+    Main star system definition
+    """
     def __init__(self, sid, name, x, y, star_type, nation_prime, nation_sec):
         self.id = sid
         self.name = name
@@ -36,15 +50,14 @@ class StarSystem:
         return '\t'.join(seq)
 
 class Wormhole:
-    """Main wormhole definition"""
-    def __init__(self, sid, star1_id, x1, y1, star2_id, x2, y2, length):
+    """
+    Main wormhole definition
+    star1, star2 - IDs of stars, connected by particular wormhole
+    """
+    def __init__(self, sid, star1_id, star2_id, length):
         self.id = sid
-        self.x1 = x1
-        self.y1 = y1
-        self.x2 = x2
-        self.y2 = y2
-        self.star1_id = star1_id
-        self.star2_id = star2_id
+        self.star1 = star1_id
+        self.star2 = star2_id
         self.length = length
 
     def __str__(self):

@@ -1,0 +1,90 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file '.\mainwindow.ui'
+#
+# Created by: PyQt5 UI code generator 5.8.1
+#
+# WARNING! All changes made in this file will be lost!
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(1024, 768)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
+        MainWindow.setSizePolicy(sizePolicy)
+        MainWindow.setMinimumSize(QtCore.QSize(1024, 700))
+        self.centralWidget = QtWidgets.QWidget(MainWindow)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.centralWidget.sizePolicy().hasHeightForWidth())
+        self.centralWidget.setSizePolicy(sizePolicy)
+        self.centralWidget.setObjectName("centralWidget")
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralWidget)
+        self.horizontalLayout.setContentsMargins(11, 11, 11, 11)
+        self.horizontalLayout.setSpacing(6)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.scrollerFrame = QtWidgets.QFrame(self.centralWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.scrollerFrame.sizePolicy().hasHeightForWidth())
+        self.scrollerFrame.setSizePolicy(sizePolicy)
+        self.scrollerFrame.setMinimumSize(QtCore.QSize(400, 400))
+        self.scrollerFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.scrollerFrame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.scrollerFrame.setObjectName("scrollerFrame")
+        self.scrollArea1 = QtWidgets.QScrollArea(self.scrollerFrame)
+        self.scrollArea1.setGeometry(QtCore.QRect(0, 0, 691, 611))
+        self.scrollArea1.setWidgetResizable(True)
+        self.scrollArea1.setObjectName("scrollArea1")
+        self.galaxyMapFrame = QtWidgets.QWidget()
+        self.galaxyMapFrame.setGeometry(QtCore.QRect(0, 0, 689, 609))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.galaxyMapFrame.sizePolicy().hasHeightForWidth())
+        self.galaxyMapFrame.setSizePolicy(sizePolicy)
+        self.galaxyMapFrame.setMinimumSize(QtCore.QSize(400, 400))
+        self.galaxyMapFrame.setObjectName("galaxyMapFrame")
+        self.scrollArea1.setWidget(self.galaxyMapFrame)
+        self.horizontalLayout.addWidget(self.scrollerFrame)
+        self.infoPanelFrame = QtWidgets.QFrame(self.centralWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.infoPanelFrame.sizePolicy().hasHeightForWidth())
+        self.infoPanelFrame.setSizePolicy(sizePolicy)
+        self.infoPanelFrame.setMinimumSize(QtCore.QSize(300, 0))
+        self.infoPanelFrame.setMaximumSize(QtCore.QSize(16777210, 16777210))
+        self.infoPanelFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.infoPanelFrame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.infoPanelFrame.setMidLineWidth(0)
+        self.infoPanelFrame.setObjectName("infoPanelFrame")
+        self.horizontalLayout.addWidget(self.infoPanelFrame)
+        self.infoPanelFrame.raise_()
+        self.scrollerFrame.raise_()
+        MainWindow.setCentralWidget(self.centralWidget)
+        self.menuBar = QtWidgets.QMenuBar(MainWindow)
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 1024, 21))
+        self.menuBar.setObjectName("menuBar")
+        MainWindow.setMenuBar(self.menuBar)
+        self.mainToolBar = QtWidgets.QToolBar(MainWindow)
+        self.mainToolBar.setObjectName("mainToolBar")
+        MainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.mainToolBar)
+        self.statusBar = QtWidgets.QStatusBar(MainWindow)
+        self.statusBar.setObjectName("statusBar")
+        MainWindow.setStatusBar(self.statusBar)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "Simple Galaxy Viewer"))
+
