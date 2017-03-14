@@ -10,6 +10,29 @@ import string
 import json
 import idcg_common
 
+max_wh_range = 19  # Maximum wormhole range
+
+
+class StarSystem(idcg_common.StarSystem):
+    """
+    Star system class with additions, needed only for galaxy generation
+    """
+    def __init__(self, sid, name, x, y, star_type, nation_prime, nation_sec):
+        super().__init__(sid, name, x, y, star_type, nation_prime, nation_sec)
+
+        # Set maximum allowed number of wormhole depending on star type
+        if star_type == 1: self.max_wormholes = 8
+        elif star_type == 2: self.max_wormholes = 8
+        elif star_type == 3: self.max_wormholes = 6
+        elif star_type == 4: self.max_wormholes = 6
+        elif star_type == 5: self.max_wormholes = 4
+        elif star_type == 6: self.max_wormholes = 3
+        elif star_type == 7: self.max_wormholes = 2
+        else: self.max_wormholes = 2
+
+        # Number of unused wormhole nodes
+        self.free_nodes = self.max_wormholes
+
 
 
 #Parsing command-line parameters
@@ -74,15 +97,71 @@ for itr_x in range(1, int(glx_width / 10)):
 
         # Create index and StarSystem object
         tmp_indx += 1
-        tmp_star = idcg_common.StarSystem(tmp_indx, rnd_starname, itr_x, itr_y, random.randrange(1,7), 1, 1)
+        tmp_star = StarSystem(tmp_indx, rnd_starname, itr_x * 10, itr_y * 10, random.randrange(1,7), 1, 1)
         stars.append(tmp_star)
 
 
+# Creating index of star systems
+starIndex = idcg_common.index_StarSystems(stars)
+
 # Generating wormholes
-#for star in stars:
+wormholes = []
+tmp_indx = 0
+for star in stars:
+
+    # Creating list of all possible connections for particular star system
+    pos_whls = []
+    for star2 in stars:
+        # Calculating range
+        rng = idcg_common.calcRange(star.x, star.y, star2.x, star2.y)
+
+        # Only neightboring systems can share wormhole
+        # So I calculate distance and screen star that too far away
+        # I also screen stars that don't have free wormhole nodes left
+        if rng <= max_wh_range and rng > 0 and star2.free_nodes > 0:
+            # print(star.name, "\t", star2.name, "\t", rng)
+            pos_whls.append(star2.id)
+
+    # Randomize list of possible wormholes
+    random.shuffle(pos_whls)
 
 
+    for whl in pos_whls:
+        star2 = stars[starIndex[whl]]
+
+        # Checking for unused nodes in both star systems
+        if star.free_nodes > 0 and star2.free_nodes > 0:
+            tmp_indx += 1   # This will be owr unique ID
+            tmp_wormhole = idcg_common.Wormhole(tmp_indx, star.id, star2.id,
+                                                int(idcg_common.calcRange(star.x, star.y, star2.x, star2.y)))
+            wormholes.append(tmp_wormhole)
+
+            # Correcting number of unused nodes in both systems
+            star.free_nodes -= 1
+            stars[starIndex[whl]].free_nodes -= 1
+
+# Check for duplicates
+for w1 in wormholes:
+    for indx, w2 in enumerate(wormholes):
+        if w1.id == w2.id: continue
+        if ((w1.star1 == w2.star1 and w1.star2 == w2.star2) or
+                (w1.star2 == w2.star1 and w1.star1 == w2.star2)):
+            print (w1.id, w2.id)
+            del wormholes[indx]
+
+
+
+# Deleting unnecessary attributes to save space in JSON
+for star in stars:
+    del star.free_nodes
+    del star.max_wormholes
+
+
+
+# Merging all list for output in one JSON
+output_list = stars + wormholes
 
 # Writing all data to JSON file
 with open(args.out, 'w', encoding='utf-8') as out_file:
-    json.dump(stars, out_file, ensure_ascii=True, indent="", default=idcg_common.jsonDefault)
+    json.dump(output_list, out_file, ensure_ascii=True, indent="", default=idcg_common.jsonDefault)
+    out_file.close()

@@ -1,8 +1,8 @@
 """
-
 Common classes and functions for all IDCG programs and utilites
-
 """
+
+from math import sqrt
 
 def jsonDefault(object):
     """
@@ -13,11 +13,22 @@ def jsonDefault(object):
 def import_star(json_string):
     """
     Converts a single JSON string to a StarSystem instance
-    :param json_string:
-    :return:
     """
     return StarSystem(json_string['id'], json_string['name'], json_string['x'], json_string['y'],
                                   json_string['star_type'], json_string['nation_prime'], json_string['nation_sec'])
+
+def import_wormhole(json_string):
+    """
+    Converts a single JSON string to a StarSystem instance
+    """
+    return Wormhole(json_string['id'], json_string['star1'], json_string['star2'], json_string['length'])
+
+def calcRange(x1, y1, x2, y2):
+    """
+    Calculate range between two point by their coordinates
+    """
+    return sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
 
 def index_StarSystems(starSystems: list):
     """
@@ -43,6 +54,7 @@ class StarSystem:
         self.star_type = star_type
         self.nation_prime = nation_prime
         self.nation_sec = nation_sec
+        self.object_type = 1    # Star system type
 
     def __str__(self):
         seq = (str(self.id), str(self.x), str(self.y),
@@ -59,8 +71,8 @@ class Wormhole:
         self.star1 = star1_id
         self.star2 = star2_id
         self.length = length
+        self.object_type = 2    # Wormhole type
 
     def __str__(self):
-        seq = (str(self.id), str(self.star1_id), str(self.x1), str(self.y1),
-               str(self.star2_id), str(self.x2), str(self.y2), str(self.length))
+        seq = (str(self.id), str(self.star1), str(self.star2), str(self.length))
         return '\t'.join(seq)
