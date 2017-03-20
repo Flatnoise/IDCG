@@ -14,8 +14,27 @@ def import_star(json_string):
     """
     Converts a single JSON string to a StarSystem instance
     """
-    return StarSystem(json_string['id'], json_string['name'], json_string['x'], json_string['y'],
-                                  json_string['star_type'], json_string['nation_prime'], json_string['nation_sec'])
+    tmp_star =  StarSystem(json_string['id'], json_string['name'], json_string['x'], json_string['y'],
+                      json_string['star_type'], json_string['nation_prime'], json_string['nation_sec'],
+                      json_string['special1'], json_string['special2'])
+
+    # Import planets list from JSON
+    json_planets = json_string['planets']
+    for json_planet in json_planets:
+        planet = import_planet(json_planet)
+        tmp_star.planets.append(planet)
+
+    return tmp_star
+
+def import_planet(json_string):
+    """
+    Converts a single JSON string to a Planet instance
+    pid, sid, name, planet_type, planet_size, atm_pressure, gravity
+    """
+    return Planet(json_string['id'], json_string['star_id'], json_string['name'],
+                  json_string['planet_type'], json_string['planet_size'],
+                  json_string['atm_pressure'], json_string['gravity'])
+
 
 def import_wormhole(json_string):
     """
@@ -46,19 +65,84 @@ class StarSystem:
     """
     Main star system definition
     """
-    def __init__(self, sid, name, x, y, star_type, nation_prime, nation_sec):
+    def __init__(self, sid, name, x, y, star_type, nation_prime, nation_sec, special1, special2):
+        self.object_type = 1    # Star system type
         self.id = sid
         self.name = name
         self.x = x
         self.y = y
-        self.star_type = star_type
-        self.nation_prime = nation_prime
-        self.nation_sec = nation_sec
-        self.object_type = 1    # Star system type
+        self.nation_prime = nation_prime    # Primary nation tag
+        self.nation_sec = nation_sec        # Secondary nation tag; feudal domain for some lord, for example
+
+        self.star_type = star_type          # Star class (O-B-A-F-G-K-M)
+        self.special1 = special1            # First special for this system; Just the int number;
+        self.special2 = special2            # Second special for this system; Just the int number;
+
+        self.planets = []
 
     def __str__(self):
         seq = (str(self.id), str(self.x), str(self.y),
                str(self.star_type), str(self.nation_prime), str(self.nation_sec), self.name)
+        return '\t'.join(seq)
+
+    def addPlanet(self, planet):
+        pass
+
+class Planet:
+    """
+    Main definition of planet
+    Planet types
+    1   Terran
+    2   Ocean
+    3   Savanna
+    4   Tundra
+    5   Arctic
+    6   Desert
+    7   Jungle
+    8   Arid
+    9   Barren
+    10  Frozen
+    11  Molten
+    12  Toxic
+    13  Gaz giant
+    """
+    def __init__(self, pid, sid, name, planet_type, planet_size, atm_pressure, gravity):
+        self.id = pid
+        self.star_id = sid
+        self.name = name
+        self.planet_type = planet_type
+        self.planet_size = planet_size
+        self.atm_pressure = atm_pressure
+        self.gravity = gravity
+
+
+    def __str__(self):
+        seq = (str(self.id), str(self.star_id), str(self.planet_type), str(self.planet_size),
+               str(self.atm_pressure), str(self.gravity), self.name)
+        return '\t'.join(seq)
+
+    def printPlanet(self):
+        if self.planet_type == 1: planetType = 'Terran'
+        elif self.planet_type == 2: planetType = 'Ocean'
+        elif self.planet_type == 3: planetType = 'Savanna'
+        elif self.planet_type == 4: planetType = 'Tundra'
+        elif self.planet_type == 5: planetType = 'Arctic'
+        elif self.planet_type == 6: planetType = 'Desert'
+        elif self.planet_type == 7: planetType = 'Jungle'
+        elif self.planet_type == 8: planetType = 'Arid'
+        elif self.planet_type == 9: planetType = 'Barren'
+        elif self.planet_type == 10: planetType = 'Frozen'
+        elif self.planet_type == 11: planetType = 'Molten'
+        elif self.planet_type == 12: planetType = 'Toxic'
+        elif self.planet_type == 13: planetType = 'Gas Giant'
+
+        seq = ('ID ' + str(self.id),
+               'StarID ' + str(self.star_id),
+               planetType,
+               'Size ' + str(self.planet_size),
+               'Atm ' + str(self.atm_pressure),
+               'Grav ' + str(self.gravity),
+               self.name)
         return '\t'.join(seq)
 
 class Wormhole:
@@ -76,3 +160,4 @@ class Wormhole:
     def __str__(self):
         seq = (str(self.id), str(self.star1), str(self.star2), str(self.length))
         return '\t'.join(seq)
+

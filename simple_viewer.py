@@ -208,11 +208,18 @@ class StarSystemFrame(QtWidgets.QFrame):
 
 
         # At this moment it prints a list of neighbours
-        print("***************", self.id, stars[starIndex[self.id]].name)
+        print("*************** Neighbors", self.id, stars[starIndex[self.id]].name)
 
         lngbh = listNeighbours(self.id)
         for star in lngbh:
             print (str(stars[starIndex[star]].name))
+
+
+        # And print contents of star:
+        print(stars[starIndex[self.id]])
+        for planet in stars[starIndex[self.id]].planets:
+            print(planet.printPlanet())
+
 
 
 

@@ -17,8 +17,8 @@ class StarSystem(idcg_common.StarSystem):
     """
     Star system class with additions, needed only for galaxy generation
     """
-    def __init__(self, sid, name, x, y, star_type, nation_prime, nation_sec):
-        super().__init__(sid, name, x, y, star_type, nation_prime, nation_sec)
+    def __init__(self, sid, name, x, y, star_type, nation_prime, nation_sec, special1, special2):
+        super().__init__(sid, name, x, y, star_type, nation_prime, nation_sec, special1, special2)
 
         # Set maximum allowed number of wormhole depending on star type
         if star_type == 1: self.max_wormholes = 8
@@ -32,6 +32,9 @@ class StarSystem(idcg_common.StarSystem):
 
         # Number of unused wormhole nodes
         self.free_nodes = self.max_wormholes
+
+        self.special1 = special1
+        self.special2 = special2
 
 
 
@@ -83,7 +86,9 @@ while max_stars > len(star_names):
 
 
 # Generating stars
-tmp_indx = 0
+tmp_indx1 = 0
+tmp_indx2 = 0
+
 stars = []  # main list of all star systems
 
 # Iterating through coord.grid with step of 10
@@ -95,9 +100,68 @@ for itr_x in range(1, int(glx_width / 10)):
         rnd_starname = star_names[rnd_index]
         del star_names[rnd_index]
 
-        # Create index and StarSystem object
-        tmp_indx += 1
-        tmp_star = StarSystem(tmp_indx, rnd_starname, itr_x * 10, itr_y * 10, random.randrange(1,7), 1, 1)
+        # Create index and StarSystem parameters
+        tmp_indx1 += 1
+
+        # Other parameters
+        nation_prime = 1    # All stars are assigned to player at this moment
+        nation_sec = 1
+        star_type = random.randrange(1,7)   # Generate random startype
+        special1 = 0                        # Specials; both not used at this moment
+        special2 = 0
+
+        # Creating instance and adding it to an list of systems
+        tmp_star = StarSystem(tmp_indx1, rnd_starname, itr_x * 10, itr_y * 10,
+                              star_type, nation_prime, nation_sec, special1, special2)
+
+        # generating planets
+        planets_count = random.randrange(2,4)
+
+        for tmp_indx3 in range(1, planets_count):
+            tmp_indx2 += 1
+
+            # Create planetName
+            if tmp_indx3 == 1: planetName = 'I'
+            elif tmp_indx3 == 2: planetName = 'II'
+            elif tmp_indx3 == 3: planetName = 'IIII'
+            elif tmp_indx3 == 4: planetName = 'IV'
+            elif tmp_indx3 == 5: planetName = 'V'
+            elif tmp_indx3 == 6: planetName = 'VI'
+            elif tmp_indx3 == 7: planetName = 'VII'
+            elif tmp_indx3 == 8: planetName = 'VIII'
+            elif tmp_indx3 == 9: planetName = 'IX'
+            planetName = rnd_starname + ' ' + planetName
+
+            planetType = random.randrange(1,14)
+            if planetType != 13:
+                planetSize = random.randrange(4,21)
+                density = round(random.random() * 2.3 + 0.1, 2)
+            else:
+                planetSize = random.randrange(20,51)
+                density = round(random.random() * 0.7 + 0.1, 2)
+
+            gravity = round(planetSize / 10 * density, 2)
+
+            # Calculate atmosphere
+            if planetType <= 7:
+                pressure = round(random.random() * 1.4 + 0.4, 2)
+            elif planetType == 8:   # Arid
+                pressure = round(random.random() * 0.4 + 0.1, 2)
+            elif planetType == 9 or planetType == 10: # Barren, frozen
+                pressure = round(random.random() * 0.2, 2)
+                if pressure < 0.1: pressure = 0
+            elif planetType == 11:  # Molten
+                pressure = round(random.random() * 2, 2)
+            elif planetType == 12:  # Toxix
+                pressure = round(random.random() * 3 + 1, 2)
+            elif planetType == 13:  # Gaz Giant
+                pressure = round(random.random() * 9 + 1, 2)
+
+            tmp_planet = idcg_common.Planet(tmp_indx2, tmp_indx1, planetName, planetType, planetSize, pressure, gravity)
+            tmp_star.planets.append(tmp_planet)
+
+
+
         stars.append(tmp_star)
 
 
@@ -146,7 +210,6 @@ for w1 in wormholes:
         if w1.id == w2.id: continue
         if ((w1.star1 == w2.star1 and w1.star2 == w2.star2) or
                 (w1.star2 == w2.star1 and w1.star1 == w2.star2)):
-            print (w1.id, w2.id)
             del wormholes[indx]
 
 
