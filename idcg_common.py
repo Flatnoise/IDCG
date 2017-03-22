@@ -14,7 +14,7 @@ def import_star(json_string):
     """
     Converts a single JSON string to a StarSystem instance
     """
-    tmp_star =  StarSystem(json_string['id'], json_string['name'], json_string['x'], json_string['y'],
+    tmp_star = StarSystem(json_string['id'], json_string['name'], json_string['x'], json_string['y'],
                       json_string['star_type'], json_string['nation_prime'], json_string['nation_sec'],
                       json_string['special1'], json_string['special2'])
 

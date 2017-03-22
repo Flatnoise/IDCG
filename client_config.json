@@ -1,0 +1,9 @@
+[
+{
+"logging": 2,
+"port": 26500,
+"server": "localhost",
+"useSSL": 0,
+"clientLog": "master_client.log"
+}
+]

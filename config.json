@@ -1,0 +1,11 @@
+[
+{
+"logging": 2,
+"port": 26500,
+"allowed_hosts": "",
+"useSSL": 0,
+"buffSize": 1024,
+"serverLog": "server.log",
+"msgLog": "messages.log"
+}
+]
