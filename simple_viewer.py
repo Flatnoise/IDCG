@@ -246,7 +246,6 @@ for item in json_data:
         stars.append(idcg_common.import_star(item))
     elif item['object_type'] == 2:
         wormholes.append(idcg_common.import_wormhole(item))
-    #print(item)
 
 # Create dictionary for fast search of star's indexed by IDs
 starIndex = idcg_common.index_StarSystems(stars)

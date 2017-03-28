@@ -1,9 +1,10 @@
-import socket
-# import ssh
 import json
 import argparse
 from os import path
 import idcg_common
+import logging
+import json
+
 
 def loadSettings(config_filename):
     """
@@ -35,7 +36,7 @@ class ServerSettings:
     """
     This class is for storing server settings
     """
-    def __init__(self, logging = 1, port = 26500, hosts = '', useSSL = 0, buffSize = 1024,
+    def __init__(self, logging = 30, port = 26500, hosts = '', useSSL = 0, buffSize = 1024,
                  serverLog = 'server.log', msgLog = 'messages.log'):
         self.logging = logging
         self.port = port
@@ -64,6 +65,7 @@ class ServerSettings:
         return '\n'.join(seq)
 
 
+
 #Parsing command-line parameters
 # USAGE: idcg_server [parameters]
 # --input <JSON FILE>
@@ -72,8 +74,11 @@ parser = argparse.ArgumentParser(description="IDCG server",
                                  usage='idcg_server [options]')
 parser.add_argument('--input', help="name of starging input savefile, JSON", default="new_galaxy.json")
 parser.add_argument('--config', help="name of configuration file, JSON", default="config.json")
-parser.add_argument('--logging', help="Logging level", type=int, default=2)
+parser.add_argument('--logging', help="Logging level", type=int, default=30)
 args = parser.parse_args()
+
+
+# Configure logging
 
 # Load setting here
 try:
@@ -83,30 +88,75 @@ except:
     print("Error loading configuration! Using default config")
     print(settings)
 
+# Configure logger
+logging.basicConfig(format = '[%(asctime)-15s][%(levelname)s][%(funcName)s] %(message)s', level = settings.logging,
+                    filename = settings.serverLog)
 
-inputSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-inputSocket.bind((settings.hosts, settings.port))
-inputSocket.listen(10)
 
-while True:
-    clientSocket, address = inputSocket.accept()
-    print("Connected from:\t", address)
+# Input .JSON filename with path
+json_input_filename = path.join(settings.dir_main, args.input)
+
+# Load JSON with data
+with open(json_input_filename, 'r') as json_input:
+    json_data = json.load(json_input)
+    json_input.close()
+
+# Creating lists with starSystems and wormholes
+stars = []
+wormholes = []
+
+# Importing stars data from input savefile to list of stars
+for item in json_data:
+    if item['object_type'] == 1:
+        stars.append(idcg_common.import_star(item))
+    elif item['object_type'] == 2:
+        wormholes.append(idcg_common.import_wormhole(item))
+
+# Create dictionary for fast search of star's indexed by IDs
+starIndex = idcg_common.index_StarSystems(stars)
+
+# for star in stars:
+#     print (star)
+#     for planet in stars[starIndex[star.id]].planets:
+#             print(planet.printPlanet())
+#
+
+
+
+inputSocket = idcg_common.JsonServer(settings.hosts, settings.port)
+inputSocket.acceptConnection()
+
+try:
     while True:
+        data = inputSocket.readObj()
 
-
-    # PLACEHOLDER
-        data = clientSocket.recv(settings.buffSize)
-        if not data: break
-        udata = data.decode('utf8')
-        print (udata)
-        if udata == 'S':
-            clientSocket.close()
+        if data == '':
+            break
         else:
-            clientSocket.send(bytes("-= " + udata + " =-", 'utf8'))
+            json_data = json.loads(data)
+
+            # Creating lists with starSystems and wormholes
+            stars = []
+            wormholes = []
+
+            # Importing stars data from input savefile to list of stars
+            for item in json_data:
+                if item['object_type'] == 1:
+                    stars.append(idcg_common.import_star(item))
+                elif item['object_type'] == 2:
+                    wormholes.append(idcg_common.import_wormhole(item))
+
+            for star in stars:
+                print(star)
+                for planet in star.planets:
+                    print(planet.printPlanet())
+
+            for wormhole in wormholes:
+                print(wormhole)
 
 
+            inputSocket.sendObj(data)
 
-#inputSocket.close()
-
-
+finally:
+    inputSocket.close()
 

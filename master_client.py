@@ -1,9 +1,10 @@
 import socket
-# import ssh
 import json
 import argparse
 from os import path
 import idcg_common
+import logging
+
 
 def loadSettings(config_filename):
     """
@@ -72,21 +73,51 @@ except:
     print("Error loading configuration! Using default config")
     print(settings)
 
-
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((settings.server, settings.port))
-
-# PLACEHOLDER
-
-data = b'SOME TEST or not some test?'
-client_socket.sendall(data)
-
-rdata = client_socket.recv(1024)
-client_socket.close()
-print('Received', repr(rdata))
+# Configure logger
+logging.basicConfig(format = '[%(asctime)-15s][%(levelname)s][%(funcName)s] %(message)s', level = settings.logging,
+                    filename = settings.clientLog)
 
 
+# Input .JSON filename with path
+json_input_filename = path.join(settings.dir_main, 'new_galaxy.json')
+
+# Load JSON with data
+with open(json_input_filename, 'r') as json_input:
+    json_data = json.load(json_input)
+    json_input.close()
+
+# Creating lists with starSystems and wormholes
+stars = []
+wormholes = []
+
+# Importing stars data from input savefile to list of stars
+for item in json_data:
+    if item['object_type'] == 1:
+        stars.append(idcg_common.import_star(item))
+    elif item['object_type'] == 2:
+        wormholes.append(idcg_common.import_wormhole(item))
+    #print(item)
+
+# Create dictionary for fast search of star's indexed by IDs
+starIndex = idcg_common.index_StarSystems(stars)
+
+output_list = stars + wormholes
+
+
+cSocket = idcg_common.JsonClient()
+cSocket.connect(settings.server, settings.port)
+
+msg = json.dumps(output_list, ensure_ascii=True, indent="", default=idcg_common.jsonDefault)
+cSocket.sendObj(msg)
+
+data = cSocket.readObj()
+
+
+print('***************************************\n')
+print(data, type(data))
 
 
 
 
+
+cSocket.close()

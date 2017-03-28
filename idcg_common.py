@@ -3,6 +3,8 @@ Common classes and functions for all IDCG programs and utilites
 """
 
 from math import sqrt
+import logging
+import socket
 
 def jsonDefault(object):
     """
@@ -161,3 +163,69 @@ class Wormhole:
         seq = (str(self.id), str(self.star1), str(self.star2), str(self.length))
         return '\t'.join(seq)
 
+class JsonSocket(object):
+    def __init__(self, address='', port=26500):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.conn = self.socket
+        self._timeout = None
+        self._address = address
+        self._port = port
+
+
+    def sendObj(self, msg):
+        lenString = '%08i' % len(msg)
+        self.conn.send(lenString.encode())
+        self.conn.send(msg.encode())
+        logging.debug("Data sent %d" % (len(msg)))
+
+
+    def readObj(self):
+        try:
+            length = int(self.conn.recv(8))
+            string = self.conn.recv(length)
+            while len(string) < length:
+                string += self.conn.recv(length - len(string))
+            return string.decode()
+            logging.debug("Data received %d" % (len(msg)))
+        except:
+            logging.error("Socket error")
+            return ''
+
+    def close(self):
+        logging.debug("closing main socket")
+        self.socket.close()
+        if self.socket is not self.conn:
+            logging.debug("closing connection socket")
+            self.conn.close()
+
+
+
+
+
+
+class JsonServer(JsonSocket):
+    def __init__(self, address='', port=26500):
+        super(JsonServer, self).__init__(address, port)
+        self.socket.bind((address, port))
+
+    def acceptConnection(self):
+        self.socket.listen(10)
+        self.conn, addr = self.socket.accept()
+        logging.debug("connection accepted, conn socket (%s,%d)" % (addr[0], addr[1]))
+
+
+
+class JsonClient(JsonSocket):
+    def __init__(self, address='', port=26500):
+        super(JsonClient, self).__init__(address, port)
+
+    def connect(self, address, port):
+        for i in range(10):
+            try:
+                self.socket.connect((address, port))
+            except socket.error as msg:
+                logging.error("SockThread Error: %s" % msg)
+                time.sleep(3)
+                continue
+            logging.info("...Socket Connected")
+            return True
