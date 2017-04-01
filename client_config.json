@@ -1,9 +1,14 @@
 [
 {
-"logging": 2,
+"logging": 10,
 "port": 26500,
 "server": "localhost",
 "useSSL": 0,
-"clientLog": "master_client.log"
+"clientLog": "master_client.log",
+"resolutionX": 1024,
+"resolutionY": 700,
+"starSystemFrameSize": 80,
+"starSystemSpace": 18,
+"whlDrawDist": 5
 }
 ]

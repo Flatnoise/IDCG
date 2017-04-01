@@ -1,6 +1,6 @@
 [
 {
-"logging": 2,
+"logging": 10,
 "port": 26500,
 "allowed_hosts": "",
 "useSSL": 0,

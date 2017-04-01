@@ -1,57 +1,51 @@
+# import logging
+import logging.handlers
 import json
 import argparse
 from os import path
+
 import idcg_common
-import logging
-import json
 
-
-def loadSettings(config_filename):
-    """
-    Load server setting from JSON file;
-    Put them into settings object from ServerSettings class
-    """
-    with open(config_filename, 'r') as settings_file:
-        settings_data = json.load(settings_file)
-        settings_file.close()
-
-    # Check if config has only one set of settings
-    # Use default settings otherwise
-    if len(settings_data) == 1:
-        tmp = settings_data[0]
-
-        return ServerSettings(
-            logging=tmp['logging'],
-            port = tmp['port'],
-            hosts = tmp['allowed_hosts'],
-            useSSL = tmp['useSSL'],
-            buffSize = tmp['buffSize'],
-            serverLog = tmp['serverLog'],
-            msgLog = tmp['msgLog']
-        )
-    else:
-        return ServerSettings()
 
 class ServerSettings:
     """
     This class is for storing server settings
     """
-    def __init__(self, logging = 30, port = 26500, hosts = '', useSSL = 0, buffSize = 1024,
-                 serverLog = 'server.log', msgLog = 'messages.log'):
+    def __init__(self, logging = logging.DEBUG, port = 26500, hosts = '', serverLog = 'server.log', msgLog = 'messages.log'):
         self.logging = logging
         self.port = port
         self.hosts = hosts
-
-        if useSSL == 0: self.useSSL = False
-        elif useSSL == 1: self.useSSL = True
-        else: self.useSSL = False
-
-        if buffSize < 1: buffSize = 1024
-        self.buffSize = buffSize
+        self.buffSize = 1024
+        self.useSSL = 0     # I don't use SSL... yet
+        # if useSSL == 0: self.useSSL = False
+        # elif useSSL == 1: self.useSSL = True
+        # else: self.useSSL = False
 
         self.dir_main = path.dirname(path.realpath(__file__))
         self.serverLog = path.join(self.dir_main, serverLog)
         self.msgLog = path.join(self.dir_main, msgLog)
+
+    def loadSettings(self, config_filename):
+        """
+        Load server setting from JSON file;
+        Put them into settings object from ServerSettings class
+        """
+        with open(config_filename, 'r') as settings_file:
+            settings_data = json.load(settings_file)
+            settings_file.close()
+
+        # Check if config has only one set of settings
+        # Use default settings otherwise
+        if len(settings_data) == 1:
+            tmp = settings_data[0]
+
+            self.logging=tmp['logging']
+            self.port=tmp['port']
+            self.hosts=tmp['allowed_hosts']
+            self.useSSL=tmp['useSSL']
+            self.buffSize=tmp['buffSize']
+            self.serverLog=path.join(self.dir_main, tmp['serverLog'])
+            self.msgLog=path.join(self.dir_main, tmp['msgLog'])
 
     def __str__(self):
         seq = ("Logging level:\t" + str(self.logging),
@@ -78,20 +72,25 @@ parser.add_argument('--logging', help="Logging level", type=int, default=30)
 args = parser.parse_args()
 
 
-# Configure logging
+settings = ServerSettings(logging=args.logging)
+
+# Configure logger
+log = logging.getLogger("ServerLogger")
+logHandler = logging.handlers.RotatingFileHandler(settings.serverLog, backupCount=1)
+logHandler.setFormatter(logging.Formatter('[%(asctime)-15s][%(levelname)s][%(funcName)s] %(message)s'))
+log.addHandler(logHandler)
+log.handlers[0].doRollover()
+log.setLevel(logging.DEBUG)
+log.info("Server started")
 
 # Load setting here
 try:
-    settings = loadSettings(args.config)
+    settings.loadSettings(args.config)
+    log.info("Setting loaded from " + args.config)
 except:
-    settings = ServerSettings()
-    print("Error loading configuration! Using default config")
-    print(settings)
+    log.error("Error loading configuration from " + args.config + " \tUsing default config")
 
-# Configure logger
-logging.basicConfig(format = '[%(asctime)-15s][%(levelname)s][%(funcName)s] %(message)s', level = settings.logging,
-                    filename = settings.serverLog)
-
+log.setLevel(settings.logging)
 
 # Input .JSON filename with path
 json_input_filename = path.join(settings.dir_main, args.input)
@@ -120,7 +119,6 @@ starIndex = idcg_common.index_StarSystems(stars)
 #     for planet in stars[starIndex[star.id]].planets:
 #             print(planet.printPlanet())
 #
-
 
 
 inputSocket = idcg_common.JsonServer(settings.hosts, settings.port)
