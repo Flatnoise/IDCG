@@ -2,8 +2,8 @@ import sys
 import json
 import argparse
 from os import path
-# import logging
-import logging.handlers
+import logging
+
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from UI_MasterClient import Ui_Master_Client
@@ -17,10 +17,10 @@ def pushDataToServer():
     pass
 
 def connectToServer():
-    pass
+    return cSocket.connect(settings.server, settings.port)
 
 def disconnectFromServer():
-    pass
+    cSocket.close()
 
 def quitClient():
     pass
@@ -310,6 +310,11 @@ except:
 
 log.setLevel(settings.logging)
 
+# Copy log object to IDCG_common module
+idcg_common.log = log
+
+
+
 
 # Initialization
 stars = []
@@ -319,36 +324,14 @@ wormholes = []
 starIndex = idcg_common.index_StarSystems(stars)
 
 
+cSocket = idcg_common.JsonClient()
 
+# print(log.DEBUG)
 
-
-
-
-# # Input .JSON filename with path
-# json_input_filename = path.join(settings.dir_main, 'new_galaxy.json')
-#
-# # Load JSON with data
-# with open(json_input_filename, 'r') as json_input:
-#     json_data = json.load(json_input)
-#     json_input.close()
-
-
-# Importing stars data from input savefile to list of stars
-# for item in json_data:
-#     if item['object_type'] == 1:
-#         stars.append(idcg_common.import_star(item))
-#     elif item['object_type'] == 2:
-#         wormholes.append(idcg_common.import_wormhole(item))
-#     #print(item)
-
-
-# output_list = stars + wormholes
-#
-#
-# cSocket = idcg_common.JsonClient()
+# print(connectToServer())
 # cSocket.connect(settings.server, settings.port)
 #
-# msg = json.dumps(output_list, ensure_ascii=True, indent="", default=idcg_common.jsonDefault)
+# msg = json.dumps(output_list, ensure_ascii=True, indent="", default=jsonDefault)
 # cSocket.sendObj(msg)
 #
 # data = cSocket.readObj()
@@ -358,7 +341,7 @@ starIndex = idcg_common.index_StarSystems(stars)
 # print(data, type(data))
 #
 #
-# cSocket.close()
+# disconnectFromServer()
 
 
 # Main app initialization

@@ -4,7 +4,9 @@ Common classes and functions for all IDCG programs and utilites
 
 from math import sqrt
 import logging
+import logging.handlers
 import socket
+import time
 
 def jsonDefault(object):
     """
@@ -176,7 +178,7 @@ class JsonSocket(object):
         lenString = '%08i' % len(msg)
         self.conn.send(lenString.encode())
         self.conn.send(msg.encode())
-        logging.debug("Data sent %d" % (len(msg)))
+        log.debug("Data sent %d" % (len(msg)))
 
 
     def readObj(self):
@@ -186,20 +188,17 @@ class JsonSocket(object):
             while len(string) < length:
                 string += self.conn.recv(length - len(string))
             return string.decode()
-            logging.debug("Data received %d" % (len(msg)))
+            log.debug("Data received %d" % (len(msg)))
         except:
-            logging.error("Socket error")
+            log.error("Socket error")
             return ''
 
     def close(self):
-        logging.debug("closing main socket")
+        log.debug("closing main socket")
         self.socket.close()
         if self.socket is not self.conn:
-            logging.debug("closing connection socket")
+            log.debug("closing connection socket")
             self.conn.close()
-
-
-
 
 
 
@@ -211,7 +210,7 @@ class JsonServer(JsonSocket):
     def acceptConnection(self):
         self.socket.listen(10)
         self.conn, addr = self.socket.accept()
-        logging.debug("connection accepted, conn socket (%s,%d)" % (addr[0], addr[1]))
+        log.debug("connection accepted, conn socket (%s,%d)" % (addr[0], addr[1]))
 
 
 
@@ -220,12 +219,14 @@ class JsonClient(JsonSocket):
         super(JsonClient, self).__init__(address, port)
 
     def connect(self, address, port):
-        for i in range(10):
+        for i in range(5):
             try:
                 self.socket.connect((address, port))
             except socket.error as msg:
-                logging.error("SockThread Error: %s" % msg)
+                log.error("SockThread Error: %s" % msg)
                 time.sleep(3)
                 continue
-            logging.info("...Socket Connected")
+            log.info("...Socket Connected")
             return True
+
+log = None
