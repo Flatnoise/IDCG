@@ -2,10 +2,14 @@
 import logging.handlers
 import json
 import argparse
+
 from os import path
+from jsonrpc import JSONRPCResponseManager, dispatcher
 
 import idcg_common
 
+def handle_push_all(data):
+    print(data)
 
 class ServerSettings:
     """
@@ -76,12 +80,13 @@ settings = ServerSettings(logging=args.logging)
 
 # Configure logger
 log = logging.getLogger("ServerLogger")
+log.setLevel(settings.logging)
 logHandler = logging.handlers.RotatingFileHandler(settings.serverLog, backupCount=1)
 logHandler.setFormatter(logging.Formatter('[%(asctime)-15s][%(levelname)s][%(funcName)s] %(message)s'))
 log.addHandler(logHandler)
 log.handlers[0].doRollover()
-log.setLevel(logging.DEBUG)
 log.info("Server started")
+
 
 # Load setting here
 try:
@@ -90,7 +95,10 @@ try:
 except:
     log.error("Error loading configuration from " + args.config + " \tUsing default config")
 
+# Copy log object to IDCG_common module
 log.setLevel(settings.logging)
+idcg_common.log = log
+
 
 # Input .JSON filename with path
 json_input_filename = path.join(settings.dir_main, args.input)
@@ -124,6 +132,10 @@ starIndex = idcg_common.index_StarSystems(stars)
 inputSocket = idcg_common.JsonServer(settings.hosts, settings.port)
 inputSocket.acceptConnection()
 
+dispatcher['push_all'] = handle_push_all
+dispatcher['echo'] = handle_push_all
+manager = JSONRPCResponseManager()
+
 try:
     while True:
         data = inputSocket.readObj()
@@ -131,29 +143,30 @@ try:
         if data == '':
             break
         else:
-            json_data = json.loads(data)
+            print(data)
+            # json_data = json.loads(data)
+            # print(json_data)
+            response = manager.handle(data, dispatcher)
+            # print(response)
 
             # Creating lists with starSystems and wormholes
-            stars = []
-            wormholes = []
+            # stars = []
+            # wormholes = []
 
             # Importing stars data from input savefile to list of stars
-            for item in json_data:
-                if item['object_type'] == 1:
-                    stars.append(idcg_common.import_star(item))
-                elif item['object_type'] == 2:
-                    wormholes.append(idcg_common.import_wormhole(item))
-
-            for star in stars:
-                print(star)
-                for planet in star.planets:
-                    print(planet.printPlanet())
-
-            for wormhole in wormholes:
-                print(wormhole)
-
-
-            inputSocket.sendObj(data)
+            # for item in json_data:
+            #     if item['object_type'] == 1:
+            #         stars.append(idcg_common.import_star(item))
+            #     elif item['object_type'] == 2:
+            #         wormholes.append(idcg_common.import_wormhole(item))
+            #
+            # for star in stars:
+            #     print(star)
+            #     for planet in star.planets:
+            #         print(planet.printPlanet())
+            #
+            # for wormhole in wormholes:
+            #     print(wormhole)
 
 finally:
     inputSocket.close()

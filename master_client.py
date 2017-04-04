@@ -2,7 +2,7 @@ import sys
 import json
 import argparse
 from os import path
-import logging
+import logging.handlers
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -10,11 +10,28 @@ from UI_MasterClient import Ui_Master_Client
 
 import idcg_common
 
+
+def mergeData(*args):
+    """
+    Merge all arguments in one list
+    """
+    merged_data = []
+    for argument in args:
+        merged_data += argument
+    return merged_data
+
+
+
 def pullDataFromServer():
     pass
 
 def pushDataToServer():
-    pass
+    if cSocket.connected:
+        data = mergeData(stars, wormholes)
+        payload = cSocket.packPayload("push_all", data)
+        cSocket.sendObj(payload)
+        log.debug("Pushed " + str(len(data)) + " bytes to server")
+        return len(payload)
 
 def connectToServer():
     return cSocket.connect(settings.server, settings.port)
@@ -308,9 +325,9 @@ try:
 except:
     log.error("Error loading configuration from " + args.config + " \tUsing default config")
 
-log.setLevel(settings.logging)
 
 # Copy log object to IDCG_common module
+log.setLevel(settings.logging)
 idcg_common.log = log
 
 
@@ -326,22 +343,45 @@ starIndex = idcg_common.index_StarSystems(stars)
 
 cSocket = idcg_common.JsonClient()
 
-# print(log.DEBUG)
 
-# print(connectToServer())
+
+# Load JSON with data
+with open('new_galaxy.json', 'r') as json_input:
+    json_data = json.load(json_input)
+    json_input.close()
+
+
+# Importing stars data from input savefile to list of stars
+for item in json_data:
+    if item['object_type'] == 1:
+        stars.append(idcg_common.import_star(item))
+    elif item['object_type'] == 2:
+        wormholes.append(idcg_common.import_wormhole(item))
+
+# Create dictionary for fast search of star's indexed by IDs
+starIndex = idcg_common.index_StarSystems(stars)
+
+# print (stars)
+# print (wormholes)
+
+print(connectToServer())
+lendata = pushDataToServer()
+log.debug(str(lendata))
+
 # cSocket.connect(settings.server, settings.port)
-#
-# msg = json.dumps(output_list, ensure_ascii=True, indent="", default=jsonDefault)
+# output_list = stars + wormholes
+# msg = json.dumps(output_list, ensure_ascii=True, indent="", default=idcg_common.jsonDefault)
+# print(type(msg))
 # cSocket.sendObj(msg)
-#
-# data = cSocket.readObj()
-#
-#
-# print('***************************************\n')
-# print(data, type(data))
-#
-#
-# disconnectFromServer()
+
+data = cSocket.readObj()
+
+
+print('***************************************\n')
+print(data, type(data))
+
+
+disconnectFromServer()
 
 
 # Main app initialization

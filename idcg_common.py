@@ -3,8 +3,9 @@ Common classes and functions for all IDCG programs and utilites
 """
 
 from math import sqrt
-import logging
-import logging.handlers
+import json
+# import logging
+# import logging.handlers
 import socket
 import time
 
@@ -173,11 +174,24 @@ class JsonSocket(object):
         self._address = address
         self._port = port
 
+    def packPayload(self, command, jsonData):
+        payload = {
+            "method": command,
+            "params": jsonData,
+            "jsonrpc": "2.0",
+            "id": 0,
+        }
+        # return json.dumps(payload, ensure_ascii=True, indent="", default=jsonDefault)
+        return json.dumps(payload,ensure_ascii=True, default=jsonDefault)
+        # return payload
+
 
     def sendObj(self, msg):
         lenString = '%08i' % len(msg)
         self.conn.send(lenString.encode())
         self.conn.send(msg.encode())
+        print(msg)
+        print(msg.encode)
         log.debug("Data sent %d" % (len(msg)))
 
 
@@ -187,7 +201,8 @@ class JsonSocket(object):
             string = self.conn.recv(length)
             while len(string) < length:
                 string += self.conn.recv(length - len(string))
-            return string.decode()
+            #return string.decode()
+            return string
             log.debug("Data received %d" % (len(msg)))
         except:
             log.error("Socket error")
@@ -217,6 +232,7 @@ class JsonServer(JsonSocket):
 class JsonClient(JsonSocket):
     def __init__(self, address='', port=26500):
         super(JsonClient, self).__init__(address, port)
+        self.connected = False
 
     def connect(self, address, port):
         for i in range(5):
@@ -227,6 +243,7 @@ class JsonClient(JsonSocket):
                 time.sleep(3)
                 continue
             log.info("...Socket Connected")
+            self.connected = True
             return True
 
 log = None
