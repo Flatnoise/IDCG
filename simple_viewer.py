@@ -218,7 +218,7 @@ class StarSystemFrame(QtWidgets.QFrame):
         # And print contents of star:
         print(stars[starIndex[self.id]])
         for planet in stars[starIndex[self.id]].planets:
-            print(planet.printPlanet())
+            print(planet.print_planet())
 
 
 

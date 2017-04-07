@@ -9,7 +9,7 @@ import json
 import socket
 import time
 
-def jsonDefault(object):
+def json_default(object):
     """
     default JSON object, for correct output of JSON to file
     """
@@ -62,7 +62,7 @@ def import_wormhole(json_string):
     """
     return Wormhole(json_string['id'], json_string['star1'], json_string['star2'], json_string['length'])
 
-def calcRange(x1, y1, x2, y2):
+def calc_range(x1, y1, x2, y2):
     """
     Calculate range between two point by their coordinates
     """
@@ -141,7 +141,7 @@ class Planet:
                str(self.atm_pressure), str(self.gravity), self.name)
         return '\t'.join(seq)
 
-    def printPlanet(self):
+    def print_planet(self):
         if self.planet_type == 1: planetType = 'Terran'
         elif self.planet_type == 2: planetType = 'Ocean'
         elif self.planet_type == 3: planetType = 'Savanna'
@@ -189,24 +189,24 @@ class JsonSocket(object):
         self._address = address
         self._port = port
 
-    def packPayload(self, command, jsonData):
+    def pack_payload(self, command, jsonData):
         payload = {
             "method": str(command),
             "jsonrpc": "2.0",
             "id": 0,
             "params": [jsonData],
         }
-        return json.dumps(payload, ensure_ascii=True, default=jsonDefault)
+        return json.dumps(payload, ensure_ascii=True, default=json_default)
 
 
-    def sendObj(self, msg):
+    def send_obj(self, msg):
         lenString = '%08i' % len(msg)
         self.conn.send(lenString.encode())
         self.conn.send(msg.encode())
         log.debug("Data sent %d" % (len(msg)))
 
 
-    def readObj(self):
+    def read_obj(self):
         try:
             length = int(self.conn.recv(8))
             string = self.conn.recv(length)
@@ -232,7 +232,7 @@ class JsonServer(JsonSocket):
         super(JsonServer, self).__init__(address, port)
         self.socket.bind((address, port))
 
-    def acceptConnection(self):
+    def accept_connection(self):
         self.socket.listen(10)
         self.conn, addr = self.socket.accept()
         log.debug("connection accepted, conn socket (%s,%d)" % (addr[0], addr[1]))

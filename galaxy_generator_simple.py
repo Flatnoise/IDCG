@@ -177,7 +177,7 @@ for star in stars:
     pos_whls = []
     for star2 in stars:
         # Calculating range
-        rng = idcg_common.calcRange(star.x, star.y, star2.x, star2.y)
+        rng = idcg_common.calc_range(star.x, star.y, star2.x, star2.y)
 
         # Only neightboring systems can share wormhole
         # So I calculate distance and screen star that too far away
@@ -197,7 +197,7 @@ for star in stars:
         if star.free_nodes > 0 and star2.free_nodes > 0:
             tmp_indx += 1   # This will be owr unique ID
             tmp_wormhole = idcg_common.Wormhole(tmp_indx, star.id, star2.id,
-                                                int(idcg_common.calcRange(star.x, star.y, star2.x, star2.y)))
+                                                int(idcg_common.calc_range(star.x, star.y, star2.x, star2.y)))
             wormholes.append(tmp_wormhole)
 
             # Correcting number of unused nodes in both systems
@@ -226,5 +226,5 @@ output_list = stars + wormholes
 
 # Writing all data to JSON file
 with open(args.out, 'w', encoding='utf-8') as out_file:
-    json.dump(output_list, out_file, ensure_ascii=True, indent="", default=idcg_common.jsonDefault)
+    json.dump(output_list, out_file, ensure_ascii=True, indent="", default=idcg_common.json_default)
     out_file.close()

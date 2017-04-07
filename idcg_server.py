@@ -2,18 +2,35 @@
 import logging.handlers
 import json
 import argparse
+import socketserver
 
 from os import path
 from jsonrpc import JSONRPCResponseManager, dispatcher
 
 import idcg_common
 
+
+def handle_pull_all():
+    """
+    Loads data from server to master client
+    """
+    pass
+
+def handle_disconnect():
+    """
+    Closing socket, disconnecting client
+    """
+    pass
+
 def handle_push_all(data):
     """
-    This function loads data from MASTER client with overwriting all current data on server
+    Loads data from MASTER client with overwriting all current data on server
     """
-    global stars, wormholes
+    global stars, wormholes, starIndex
+    stars = []
+    wormholes = []
     stars, wormholes = idcg_common.import_all(data)
+    starIndex = idcg_common.index_StarSystems(stars)
 
 class ServerSettings:
     """
@@ -33,7 +50,7 @@ class ServerSettings:
         self.serverLog = path.join(self.dir_main, serverLog)
         self.msgLog = path.join(self.dir_main, msgLog)
 
-    def loadSettings(self, config_filename):
+    def load_settings(self, config_filename):
         """
         Load server setting from JSON file;
         Put them into settings object from ServerSettings class
@@ -88,13 +105,13 @@ log.setLevel(settings.logging)
 logHandler = logging.handlers.RotatingFileHandler(settings.serverLog, backupCount=1)
 logHandler.setFormatter(logging.Formatter('[%(asctime)-15s][%(levelname)s][%(funcName)s] %(message)s'))
 log.addHandler(logHandler)
-log.handlers[0].doRollover()
+log.handlers[ 0].doRollover()
 log.info("Server started")
 
 
 # Load setting here
 try:
-    settings.loadSettings(args.config)
+    settings.load_settings(args.config)
     log.info("Setting loaded from " + args.config)
 except:
     log.error("Error loading configuration from " + args.config + " \tUsing default config")
@@ -117,35 +134,38 @@ stars = []
 wormholes = []
 
 # Importing stars data from input savefile to list of stars
-# for item in json_data:
-#     if item['object_type'] == 1:
-#         stars.append(idcg_common.import_star(item))
-#     elif item['object_type'] == 2:
-#         wormholes.append(idcg_common.import_wormhole(item))
+for item in json_data:
+    if item['object_type'] == 1:
+        stars.append(idcg_common.import_star(item))
+    elif item['object_type'] == 2:
+        wormholes.append(idcg_common.import_wormhole(item))
 
 # Create dictionary for fast search of star's indexed by IDs
-# starIndex = idcg_common.index_StarSystems(stars)
+starIndex = idcg_common.index_StarSystems(stars)
 
 for star in stars:
     print(star)
     for planet in star.planets:
-        print(planet.printPlanet())
+        print(planet.print_planet())
 
 for wormhole in wormholes:
     print(wormhole)
 
 print ("*** DEBUG ***")
-print ("No info should be displayed above\n")
 
 inputSocket = idcg_common.JsonServer(settings.hosts, settings.port)
-inputSocket.acceptConnection()
+inputSocket.accept_connection()
 
+# Handlers for client-server commands
 dispatcher["push_all"] = handle_push_all
+dispatcher["pull_all"] = handle_pull_all
+dispatcher["disconnect"] = handle_disconnect
 manager = JSONRPCResponseManager()
+
 
 try:
     while True:
-        data = inputSocket.readObj()
+        data = inputSocket.read_obj()
 
         if data == '':
             break
@@ -164,7 +184,7 @@ print ("****************************************")
 for star in stars:
     print(star)
     for planet in star.planets:
-        print(planet.printPlanet())
+        print(planet.print_planet())
 
 for wormhole in wormholes:
     print(wormhole)

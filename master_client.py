@@ -4,14 +4,13 @@ import argparse
 from os import path
 import logging.handlers
 
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 from UI_MasterClient import Ui_Master_Client
 
 import idcg_common
 
 
-def mergeData(*args):
+def merge_data(*args):
     """
     Merge all arguments in one list
     """
@@ -22,26 +21,29 @@ def mergeData(*args):
 
 
 
-def pullDataFromServer():
+def pull_data_from_server():
+    """
+    Pulls all systems and wormholes to server with overwrite of local content
+    """
     pass
 
-def pushDataToServer():
+def push_data_to_server():
     """
-    Push all systems and wormholes to server with overwrite
+    Push all systems and wormholes to server with overwrite of remote content
     """
     if cSocket.connected:
-        data = mergeData(stars, wormholes)
-        payload = cSocket.packPayload("push_all", data)
-        cSocket.sendObj(payload)
+        data = merge_data(stars, wormholes)
+        payload = cSocket.pack_payload("push_all", data)
+        cSocket.send_obj(payload)
         log.debug("Pushed " + str(len(data)) + " bytes to server")
 
-def connectToServer():
+def connect_to_server():
     cSocket.connect(settings.server, settings.port)
 
-def disconnectFromServer():
+def disconnect_from_server():
     cSocket.close()
 
-def quitClient():
+def quit_client():
     pass
 
 
@@ -70,7 +72,7 @@ class MasterClientSettings:
         self.dir_images = path.join(self.dir_resources, 'images')
         self.clientLog = path.join(self.dir_main, clientLog)
 
-    def loadSettings(self, config_filename):
+    def load_settings(self, config_filename):
         """
         Load server setting from JSON file;
         Put them into mentioned object
@@ -150,19 +152,19 @@ class GalaxyMapMainWindow(QtWidgets.QMainWindow, Ui_Master_Client):
                                                       max_starY * settings.starSystemSpace + 90))
 
         # Assign paint event to galaxy map frame only
-        self.galaxyMapFrame.paintEvent = self.gMapPaintEvent
+        self.galaxyMapFrame.paintEvent = self.gMap_paint_event
 
         # Handler for main menu options
-        self.actionQuit_client.triggered.connect(quitClient)
+        self.actionQuit_client.triggered.connect(quit_client)
 
-        self.actionConnect_to_server.triggered.connect(connectToServer)
-        self.actionDisconnect_from_server.triggered.connect(disconnectFromServer)
+        self.actionConnect_to_server.triggered.connect(connect_to_server)
+        self.actionDisconnect_from_server.triggered.connect(disconnect_from_server)
 
-        self.actionPull_from_server.triggered.connect(pullDataFromServer)
-        self.actionPush_to_server.triggered.connect(pushDataToServer)
+        self.actionPull_from_server.triggered.connect(pull_data_from_server)
+        self.actionPush_to_server.triggered.connect(push_data_to_server)
 
 
-    def resizeEvent(self, resizeEvent):
+    def resize_event(self, resizeEvent):
         """
         Event: resize main window
         """
@@ -170,13 +172,13 @@ class GalaxyMapMainWindow(QtWidgets.QMainWindow, Ui_Master_Client):
         self.scrollArea1.setFixedSize(QtCore.QSize(self.scrollerFrame.width(),
                                                    self.scrollerFrame.height()))
 
-    def gMapPaintEvent(self, paint):
+    def gMap_paint_event(self, paint):
         qp = QtGui.QPainter()
         qp.begin(self.galaxyMapFrame)
-        self.drawWormholes(qp)
+        self.draw_wormholes(qp)
         qp.end()
 
-    def drawWormholes(self, qp):
+    def draw_wormholes(self, qp):
         """
         Draw all wormholes with lines
         """
@@ -245,7 +247,7 @@ class StarSystemFrame(QtWidgets.QFrame):
         label.setStyleSheet("color: rgb(255, 255, 255)")
 
         # Icon with star
-        pix = QtGui.QPixmap(self.selectStarImage(stars[lpos].star_type))
+        pix = QtGui.QPixmap(self.select_star_image(stars[lpos].star_type))
         img = QtWidgets.QLabel('', self)
         img.setPixmap(pix)
         img.move(centerX - int(pix.width() / 2), centerY - int(pix.height() / 2))
@@ -253,7 +255,7 @@ class StarSystemFrame(QtWidgets.QFrame):
         # Writing IDs
         self.id = sid
 
-    def selectStarImage(self, type):
+    def select_star_image(self, type):
         """
         This function return a path to a star's icon depending on type of star
         """
@@ -275,7 +277,7 @@ class StarSystemFrame(QtWidgets.QFrame):
             filename = "icon_star_m.png"
         return path.join(settings.dir_images, filename)
 
-    def mousePressEvent(self, event):
+    def mouse_press_event(self, event):
         """
         This event is handling clicks on star systems
         """
@@ -290,7 +292,7 @@ class StarSystemFrame(QtWidgets.QFrame):
         # And print contents of star:
         print(stars[starIndex[self.id]])
         for planet in stars[starIndex[self.id]].planets:
-            print(planet.printPlanet())
+            print(planet.print_planet())
 
 
 
@@ -322,7 +324,7 @@ log.info("Master client started")
 
 # Load settings from config file here
 try:
-    settings.loadSettings(args.config)
+    settings.load_settings(args.config)
     log.info("Setting loaded from " + args.config)
 except:
     log.error("Error loading configuration from " + args.config + " \tUsing default config")
@@ -346,28 +348,27 @@ starIndex = idcg_common.index_StarSystems(stars)
 cSocket = idcg_common.JsonClient()
 
 
+# # Load JSON with data
+# with open('new_galaxy.json', 'r') as json_input:
+#     json_data = json.load(json_input)
+#     json_input.close()
+#
+#
+# # Importing stars data from input savefile to list of stars
+# for item in json_data:
+#     if item['object_type'] == 1:
+#         stars.append(idcg_common.import_star(item))
+#     elif item['object_type'] == 2:
+#         wormholes.append(idcg_common.import_wormhole(item))
+#
+# # Create dictionary for fast search of star's indexed by IDs
+# starIndex = idcg_common.index_StarSystems(stars)
 
-# Load JSON with data
-with open('new_galaxy.json', 'r') as json_input:
-    json_data = json.load(json_input)
-    json_input.close()
 
-
-# Importing stars data from input savefile to list of stars
-for item in json_data:
-    if item['object_type'] == 1:
-        stars.append(idcg_common.import_star(item))
-    elif item['object_type'] == 2:
-        wormholes.append(idcg_common.import_wormhole(item))
-
-# Create dictionary for fast search of star's indexed by IDs
-starIndex = idcg_common.index_StarSystems(stars)
-
-
-# if connectToServer():
-#     lendata = pushDataToServer()
+# if connect_to_server():
+#     lendata = push_data_to_server()
 #     log.debug(str(lendata))
-# disconnectFromServer()
+# disconnect_from_server()
 
 
 # Main app initialization
