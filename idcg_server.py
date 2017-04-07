@@ -9,7 +9,11 @@ from jsonrpc import JSONRPCResponseManager, dispatcher
 import idcg_common
 
 def handle_push_all(data):
-    print(data)
+    """
+    This function loads data from MASTER client with overwriting all current data on server
+    """
+    global stars, wormholes
+    stars, wormholes = idcg_common.import_all(data)
 
 class ServerSettings:
     """
@@ -113,27 +117,30 @@ stars = []
 wormholes = []
 
 # Importing stars data from input savefile to list of stars
-for item in json_data:
-    if item['object_type'] == 1:
-        stars.append(idcg_common.import_star(item))
-    elif item['object_type'] == 2:
-        wormholes.append(idcg_common.import_wormhole(item))
+# for item in json_data:
+#     if item['object_type'] == 1:
+#         stars.append(idcg_common.import_star(item))
+#     elif item['object_type'] == 2:
+#         wormholes.append(idcg_common.import_wormhole(item))
 
 # Create dictionary for fast search of star's indexed by IDs
-starIndex = idcg_common.index_StarSystems(stars)
+# starIndex = idcg_common.index_StarSystems(stars)
 
-# for star in stars:
-#     print (star)
-#     for planet in stars[starIndex[star.id]].planets:
-#             print(planet.printPlanet())
-#
+for star in stars:
+    print(star)
+    for planet in star.planets:
+        print(planet.printPlanet())
 
+for wormhole in wormholes:
+    print(wormhole)
+
+print ("*** DEBUG ***")
+print ("No info should be displayed above\n")
 
 inputSocket = idcg_common.JsonServer(settings.hosts, settings.port)
 inputSocket.acceptConnection()
 
-dispatcher['push_all'] = handle_push_all
-dispatcher['echo'] = handle_push_all
+dispatcher["push_all"] = handle_push_all
 manager = JSONRPCResponseManager()
 
 try:
@@ -143,31 +150,23 @@ try:
         if data == '':
             break
         else:
-            print(data)
-            # json_data = json.loads(data)
-            # print(json_data)
+            data = data.decode()
             response = manager.handle(data, dispatcher)
-            # print(response)
 
-            # Creating lists with starSystems and wormholes
-            # stars = []
-            # wormholes = []
-
-            # Importing stars data from input savefile to list of stars
-            # for item in json_data:
-            #     if item['object_type'] == 1:
-            #         stars.append(idcg_common.import_star(item))
-            #     elif item['object_type'] == 2:
-            #         wormholes.append(idcg_common.import_wormhole(item))
-            #
-            # for star in stars:
-            #     print(star)
-            #     for planet in star.planets:
-            #         print(planet.printPlanet())
-            #
-            # for wormhole in wormholes:
-            #     print(wormhole)
 
 finally:
     inputSocket.close()
+
+
+print ("\nFinally, printing data")
+print ("****************************************")
+print ("****************************************")
+for star in stars:
+    print(star)
+    for planet in star.planets:
+        print(planet.printPlanet())
+
+for wormhole in wormholes:
+    print(wormhole)
+
 

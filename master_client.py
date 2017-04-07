@@ -26,15 +26,17 @@ def pullDataFromServer():
     pass
 
 def pushDataToServer():
+    """
+    Push all systems and wormholes to server with overwrite
+    """
     if cSocket.connected:
         data = mergeData(stars, wormholes)
         payload = cSocket.packPayload("push_all", data)
         cSocket.sendObj(payload)
         log.debug("Pushed " + str(len(data)) + " bytes to server")
-        return len(payload)
 
 def connectToServer():
-    return cSocket.connect(settings.server, settings.port)
+    cSocket.connect(settings.server, settings.port)
 
 def disconnectFromServer():
     cSocket.close()
@@ -361,27 +363,11 @@ for item in json_data:
 # Create dictionary for fast search of star's indexed by IDs
 starIndex = idcg_common.index_StarSystems(stars)
 
-# print (stars)
-# print (wormholes)
 
-print(connectToServer())
-lendata = pushDataToServer()
-log.debug(str(lendata))
-
-# cSocket.connect(settings.server, settings.port)
-# output_list = stars + wormholes
-# msg = json.dumps(output_list, ensure_ascii=True, indent="", default=idcg_common.jsonDefault)
-# print(type(msg))
-# cSocket.sendObj(msg)
-
-data = cSocket.readObj()
-
-
-print('***************************************\n')
-print(data, type(data))
-
-
-disconnectFromServer()
+# if connectToServer():
+#     lendata = pushDataToServer()
+#     log.debug(str(lendata))
+# disconnectFromServer()
 
 
 # Main app initialization

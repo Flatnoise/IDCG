@@ -15,6 +15,21 @@ def jsonDefault(object):
     """
     return object.__dict__
 
+
+def import_all(data):
+    """
+    This function splits combined list of data to separate lists of system, wormholes, etc. 
+    """
+    _stars = []
+    _wormholes = []
+    for item in data:
+        if item['object_type'] == 1:
+            _stars.append(import_star(item))
+        elif item['object_type'] == 2:
+            _wormholes.append(import_wormhole(item))
+    return _stars, _wormholes
+
+
 def import_star(json_string):
     """
     Converts a single JSON string to a StarSystem instance
@@ -176,22 +191,18 @@ class JsonSocket(object):
 
     def packPayload(self, command, jsonData):
         payload = {
-            "method": command,
-            "params": jsonData,
+            "method": str(command),
             "jsonrpc": "2.0",
             "id": 0,
+            "params": [jsonData],
         }
-        # return json.dumps(payload, ensure_ascii=True, indent="", default=jsonDefault)
-        return json.dumps(payload,ensure_ascii=True, default=jsonDefault)
-        # return payload
+        return json.dumps(payload, ensure_ascii=True, default=jsonDefault)
 
 
     def sendObj(self, msg):
         lenString = '%08i' % len(msg)
         self.conn.send(lenString.encode())
         self.conn.send(msg.encode())
-        print(msg)
-        print(msg.encode)
         log.debug("Data sent %d" % (len(msg)))
 
 
@@ -201,9 +212,8 @@ class JsonSocket(object):
             string = self.conn.recv(length)
             while len(string) < length:
                 string += self.conn.recv(length - len(string))
-            #return string.decode()
+            log.debug("Data received %d" % (len(string)))
             return string
-            log.debug("Data received %d" % (len(msg)))
         except:
             log.error("Socket error")
             return ''
